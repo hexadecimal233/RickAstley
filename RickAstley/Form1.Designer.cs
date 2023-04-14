@@ -1,12 +1,10 @@
 ﻿
 namespace RickAstley
 {
-    partial class Form1
-    {
+    partial class Form1 {
         private System.ComponentModel.IContainer components = null;
 
-        protected override void Dispose(bool disposing)
-        {
+        protected override void Dispose(bool disposing) {
             if (disposing && (components != null))
             {
                 components.Dispose();
@@ -14,8 +12,7 @@ namespace RickAstley
             base.Dispose(disposing);
         }
 
-        private void InitializeComponent()
-        {
+        private void InitializeComponent() {
             this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
