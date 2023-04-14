@@ -65,7 +65,7 @@ namespace RickAstley.Properties {
         internal static System.Drawing.Bitmap Astley {
             get {
                 object obj = ResourceManager.GetObject("Astley", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ((System.Drawing.Bitmap) (obj));
             }
         }
         

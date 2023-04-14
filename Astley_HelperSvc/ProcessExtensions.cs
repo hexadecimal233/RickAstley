@@ -17,7 +17,7 @@ namespace murrayju.ProcessExtensions {
                 IntPtr current = pSessionInfo;
 
                 for (int i = 0; i < sessionCount; i++) {
-                    WTS_SESSION_INFO si = (WTS_SESSION_INFO)Marshal.PtrToStructure(current, typeof(WTS_SESSION_INFO));
+                    WTS_SESSION_INFO si = (WTS_SESSION_INFO) Marshal.PtrToStructure(current, typeof(WTS_SESSION_INFO));
                     current += arrayElementSize;
 
                     if (si.State == WTS_CONNECTSTATE_CLASS.WTSActive) {
@@ -34,7 +34,7 @@ namespace murrayju.ProcessExtensions {
             if (WTSQueryUserToken(activeSessionId, ref hImpersonationToken) != 0) {
                 // Convert the impersonation token to a primary token
                 bResult = DuplicateTokenEx(hImpersonationToken, 0, IntPtr.Zero,
-                    (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, (int)TOKEN_TYPE.TokenPrimary,
+                    (int) SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, (int) TOKEN_TYPE.TokenPrimary,
                     ref phUserToken);
 
                 CloseHandle(hImpersonationToken);
@@ -57,8 +57,8 @@ namespace murrayju.ProcessExtensions {
                     throw new Exception("StartProcessAsCurrentUser: GetSessionUserToken failed.");
                 }
 
-                uint dwCreationFlags = CREATE_UNICODE_ENVIRONMENT | (uint)(visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
-                startInfo.wShowWindow = (short)(visible ? SW.SW_SHOW : SW.SW_HIDE);
+                uint dwCreationFlags = CREATE_UNICODE_ENVIRONMENT | (uint) (visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
+                startInfo.wShowWindow = (short) (visible ? SW.SW_SHOW : SW.SW_HIDE);
                 startInfo.lpDesktop = "winsta0\\default";
 
                 if (!CreateEnvironmentBlock(ref pEnv, hUserToken, false)) {
@@ -81,8 +81,7 @@ namespace murrayju.ProcessExtensions {
                 }
 
                 iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
-            }
-            finally {
+            } finally {
                 CloseHandle(hUserToken);
                 if (pEnv != IntPtr.Zero) {
                     DestroyEnvironmentBlock(pEnv);

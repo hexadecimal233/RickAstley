@@ -75,7 +75,7 @@ namespace RickRollGuardian.Properties {
         internal static byte[] RickAstley {
             get {
                 object obj = ResourceManager.GetObject("RickAstley", resourceCulture);
-                return ((byte[])(obj));
+                return ((byte[]) (obj));
             }
         }
     }
